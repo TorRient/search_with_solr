@@ -4,8 +4,15 @@ import os
 from flask import Flask, jsonify, request, render_template
 from werkzeug.utils import secure_filename
 
+config = {
+    'host': 'http://localhost',
+    'port': '8983',
+    'core_name': 'core_voccer',
+    'timeout': 100
+}
+
 # Setup a Solr instance. The timeout is optional.
-solr = pysolr.Solr('http://10.10.16.236:8983/solr/core_voccer', always_commit=True, timeout=100)
+solr = pysolr.Solr(config['host']+':'+config['port']+'/solr/'+config['core_name'], always_commit=True, timeout=config['timeout'])
 
 static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static/')
 app = Flask(__name__)
@@ -15,11 +22,14 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.realpath(__fi
 @app.route('/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
+    count = 0
     for file_name in list_json:
         paths = os.path.join('./data',file_name)
         with open(paths) as json_file:
             data = json.load(json_file)
+            data = list(data)[:10]
             solr.add(data)
+        break
     return jsonify("OK")
 
 # Thêm data bằng file
