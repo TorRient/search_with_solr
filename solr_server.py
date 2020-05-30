@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request, render_template
 from werkzeug.utils import secure_filename
 
 # Setup a Solr instance. The timeout is optional.
-solr = pysolr.Solr('http://localhost:8983/solr/bkcv', always_commit=True, timeout=10)
+solr = pysolr.Solr('http://10.10.16.236:8983/solr/core_voccer', always_commit=True, timeout=100)
 
 static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static/')
 app = Flask(__name__)
