@@ -3,4 +3,3 @@ word2vec
 params.txt
 author.json
 quote.json
-solr_test.py

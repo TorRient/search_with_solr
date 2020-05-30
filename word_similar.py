@@ -23,16 +23,25 @@ class Word_Similar():
         return stopword
 
     def find_word_similar(self, sentence):
+        sentence = sentence.lower()
         words = self.filter_stopwords(sentence)
         word_similar = []
         for word in words:
+            word_similar.append([(word,1.0)])
             try:
                 word_similar.append(self.model.wv.most_similar(positive=[word], topn=self.numbe_top))
             except:
                 pass
-        return word_similar
+        text = ''
+        print(word_similar)
+        for words in word_similar:
+            for word in words:
+                if word[1] > 0.5:
+                    text += "'" + word[0].replace("_", " ") + "' "
+        
+        return text[:-1]
 
 # ws = Word_Similar()
 
-# print(ws.find_word_similar("bóng đá việt nam"))
+# print(ws.find_word_similar("Phòng"))
     
