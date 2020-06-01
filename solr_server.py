@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 config = {
     'host': 'http://localhost',
     'port': '8983',
-    'core_name': 'core_voccer',
+    'core_name': 'bkcv',
     'timeout': 100
 }
 
@@ -30,9 +30,9 @@ def add_data(path='./data'):
         paths = os.path.join('./data',file_name)
         with open(paths) as json_file:
             data = json.load(json_file)
-            data = list(data)[:10]
+            data = list(data)
             solr.add(data)
-        break
+        # break
     return jsonify("OK")
 
 # Thêm data bằng file
