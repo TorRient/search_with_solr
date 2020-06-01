@@ -21,8 +21,8 @@ static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'stati
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads/')
 
-# from word_similar import Word_Similar
-# ws = Word_Similar()
+from word_similar import Word_Similar
+ws = Word_Similar()
 
 # Add data
 @app.route('/add_data', methods=['GET'])
@@ -73,12 +73,12 @@ def add_data_file():
 @app.route('/fulltext', methods=['POST'])
 def fulltext():
     rows         = request.args.get('rows')
-    general_text = request.args.get('general_text')
+    full_text    = request.args.get('full_text')
     word_similar = request.args.get('word_similar')
     if word_similar == True: # Nếu có feature từ đồng nghĩa
-        general_text = ws.find_word_similar(general_text)
+        full_text = ws.find_word_similar(full_text)
 
-    results = solr.search(general_text, **{
+    result = solr.search(full_text, **{
         'rows':rows,
         'hl':'true',
         'hl.method':'original',
@@ -95,11 +95,16 @@ def fulltext():
         'pf': 'title^1.0 description^1.0 content^2.0',
         'qf':'topic^1 title^3.0 description^1.0 content^1.0',
     })
-    return jsonify("OK")
+    highlight = []
+    for i in result.highlighting.values():
+        highlight.append(i)
+    return jsonify(results=json.dumps(list(result)), hightlight=json.dumps(highlight))
 
 @app.route('/field', methods=['POST'])
 def fulltextws():
-    rows                = request.args.get('rows')
+    rows                = int(request.args.get('rows'))
+    print(type(rows))
+    word_similar        = request.args.get('word_similar')
 
     # general_text        = request.args.get('general_text')
     topic               = request.args.get('topic')
@@ -125,15 +130,16 @@ def fulltextws():
     publish_date        = request.args.get('publish_date')
     # weight_publish_date = request.args.get('weight_publish_date')
     # print(topic)
-    print(title)
+    # print(title)
     # print(description)
     # print(content)
     # print(author)
     # print(publish_date)
+    # if word_similar == True:
     title             = ws.find_word_similar(title) if title != "" else ""
     description       = ws.find_word_similar(description) if description != "" else ""
     content           = ws.find_word_similar(content) if content != "" else ""
-    print(title)
+
     if topic == '':
         topic_q             = Q(topic="*")
     else:
@@ -188,7 +194,7 @@ def fulltextws():
         query = query & publish_date_q
     else:
         query = query | publish_date_q
-    print(query)
+    # print(query)
     result = solr.search(str(query).replace("\\",""), **{
         'rows': rows,
         'hl':'true',
@@ -206,10 +212,10 @@ def fulltextws():
         'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
         'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
-    for i in result:
-        print(i)
-    print(result.highlighting.values())
-    return jsonify("ok")
+    highlight = []
+    for i in result.highlighting.values():
+        highlight.append(i)
+    return jsonify(results=json.dumps(list(result)), hightlight=json.dumps(highlight))
 
 # Xóa data
 @app.route('/delete_data', methods=['GET'])
