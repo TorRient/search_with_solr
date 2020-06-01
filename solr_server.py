@@ -21,27 +21,28 @@ static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'stati
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads/')
 
-# from word_similar import Word_Similar
-# ws = Word_Similar()
+from word_similar import Word_Similar
+ws = Word_Similar()
 
 # Add data
 @app.route('/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
-    count = 0
     for file_name in list_json:
-        paths = os.path.join('./data',file_name)
+        paths = os.path.join(path, file_name)
         with open(paths) as json_file:
             data = json.load(json_file)
             data = list(data)
             for field in data:
                 field["content"] = ViTokenizer.tokenize(field["content"])
-                field["author"] = ViTokenizer.tokenize(field["author"])
                 field["title"] = ViTokenizer.tokenize(field["title"])
                 field["description"] = ViTokenizer.tokenize(field["description"])
                 field["topic"] = ViTokenizer.tokenize(field["topic"])
+
+                field["author"] = field["author"].replace(' ', '_')
+
             solr.add(data)
-        # break
+        
     return jsonify("OK")
 
 # Thêm data bằng file
@@ -74,7 +75,8 @@ def add_data_file():
 def fulltext():
     general_text = request.args.get('general_text')
     word_similar = request.args.get('word_similar')
-    if word_similar == True: # Nếu có feature từ đồng nghĩa
+    # Nếu có feature từ đồng nghĩa
+    if word_similar == True: 
         general_text = ws.find_word_similar(general_text)
 
     results = solr.search(general_text, **{
@@ -85,14 +87,14 @@ def fulltext():
         'hl.simple.post':'</mark>',
         'hl.highlightMultiTerm':'true',
         'hl.fragsize':100,
-        'defType' : 'dismax',
+        'defType' : 'edismax',
         'fl' : '*, score',
         # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm':1,
         'ps':3,
-        'pf': 'title^1.0 description^1.0 content^2.0',
-        'qf':'topic^1 title^3.0 description^1.0 content^1.0',
+        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     return jsonify("OK")
 
@@ -121,16 +123,11 @@ def fulltextws():
     
     publish_date        = request.args.get('publish_date')
     # weight_publish_date = request.args.get('weight_publish_date')
-    # print(topic)
-    print(title)
-    # print(description)
-    # print(content)
-    # print(author)
-    # print(publish_date)
+   
     title             = ws.find_word_similar(title) if title != "" else ""
     description       = ws.find_word_similar(description) if description != "" else ""
     content           = ws.find_word_similar(content) if content != "" else ""
-    print(title)
+
     if topic == '':
         topic_q             = Q(topic="*")
     else:
@@ -185,9 +182,9 @@ def fulltextws():
         query = query & publish_date_q
     else:
         query = query | publish_date_q
-    print(query)
+    # print(query)
     result = solr.search(str(query).replace("\\",""), **{
-        'rows':1,
+        'rows':3,
         'hl':'true',
         'hl.method':'original',
         'hl.simple.pre':'<mark style="background-color:#ffff0070;">',
@@ -196,23 +193,31 @@ def fulltextws():
         'hl.fragsize':100,
         'defType' : 'edismax',
         'fl' : '*, score',
-        # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
+        'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm':1,
         'ps':3,
         'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
         'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
-    for i in result:
-        print(i)
-    print(result.highlighting.values())
-    return jsonify("ok")
+    # for i in result:
+    #     print(i)
+    # print(result.highlighting.values())
+    print(len(list(result)))
+
+    return jsonify(json.dumps(list(result)))
 
 # Xóa data
 @app.route('/delete_data', methods=['GET'])
 def delete_data():
     solr.delete(q='*:*')
     return jsonify("OK")
+
+@app.route('/result_search/clicked/<id>', methods=['POST'])
+def clicked(id):
+    doc = { 'id' : id, 'clicked' : 1}
+    solr.add([doc], fieldUpdates={'clicked':'inc'})
+    return 'OK'
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)

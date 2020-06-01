@@ -127,6 +127,8 @@
 <field name="publish_date" type="publish_date_general" indexed="true" stored="true" />
 <field name="description" type="description_general" indexed="true" stored="true" />
 <field name="topic" type="topic_general" indexed="true" stored="true" />
+<field name="clicked" type="pint" default="0" indexed="false" stored="false"/>
+
 <fieldType name="content_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
