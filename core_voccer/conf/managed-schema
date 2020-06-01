@@ -130,10 +130,12 @@
 <fieldType name="content_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.SuggestStopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
@@ -144,6 +146,7 @@
 <fieldType name="author_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
@@ -159,10 +162,12 @@
 <fieldType name="title_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.SuggestStopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
@@ -173,10 +178,12 @@
 <fieldType name="publish_date_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.SuggestStopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
@@ -187,10 +194,12 @@
 <fieldType name="description_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.SuggestStopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
@@ -201,10 +210,12 @@
 <fieldType name="topic_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
   <analyzer type="index">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <analyzer type="query">
     <tokenizer class="solr.StandardTokenizerFactory" />
+    <filter class="solr.SuggestStopFilterFactory" ignoreCase="true" words="lang/vi_stopwords.txt" />
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
