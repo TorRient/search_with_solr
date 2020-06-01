@@ -4,6 +4,9 @@ import os
 from flask import Flask, jsonify, request, render_template
 from werkzeug.utils import secure_filename
 from pyvi import ViTokenizer
+
+from solrq import Q
+
 config = {
     'host': 'http://localhost',
     'port': '8983',
@@ -118,23 +121,72 @@ def fulltextws():
     
     publish_date        = request.args.get('publish_date')
     # weight_publish_date = request.args.get('weight_publish_date')
-    print(description)
-    title             = "title:"  + ws.find_word_similar(title) if title != "" else ""
-    description       = "description:"  + ws.find_word_similar(description) if description != "" else ""
-    content           = "content:"  + ws.find_word_similar(content) if content != "" else ""
-    bool_1 = "&&"
-    print(topic)
+    # print(topic)
     print(title)
-    print(description)
-    print(content)
-    print(author)
-    query = topic + " " + bool_1 + " " +\
-            title + " " + bool_1 + " " +\
-            description + " " + bool_1 + " " +\
-            content + " " + bool_1 + " " +\
-            "'" + author + "'" + " " + bool_1 + " " + publish_date
+    # print(description)
+    # print(content)
+    # print(author)
+    # print(publish_date)
+    title             = ws.find_word_similar(title) if title != "" else ""
+    description       = ws.find_word_similar(description) if description != "" else ""
+    content           = ws.find_word_similar(content) if content != "" else ""
+    print(title)
+    if topic == '':
+        topic_q             = Q(topic="*")
+    else:
+        topic_q             = Q(topic=topic)
+
+    if title == '':
+        title_q             = Q(title="*")
+    else:
+        title_q             = Q(title=title)
+
+    if description == '':
+        description_q       = Q(description="*")
+    else:
+        description_q       = Q(description=description)
+
+    if content == '':
+        content_q           = Q(content="*")
+    else:
+        content_q           = Q(content=content)
+
+    if author == '':
+        author_q            = Q(author="*")
+    else:
+        author_q            = Q(author=author)
+
+    if publish_date == '':
+        publish_date_q      = Q(publish_date="*")
+    else:
+        publish_date_q      = Q(publish_date=publish_date)
     
-    result = solr.search(query, **{
+    if bool_1 == "AND" or bool_1 == None:
+        query = topic_q & title_q
+    else:
+        query = topic_q | title_q
+    
+    if bool_2 == "AND"  or bool_1 == None:
+        query = query & description_q
+    else:
+        query = query | description_q
+
+    if bool_3 == "AND"  or bool_1 == None:
+        query = query & content_q
+    else:
+        query = query | content_q
+
+    if bool_4 == "AND"  or bool_1 == None:
+        query = query & author_q
+    else:
+        query = query | author_q
+
+    if bool_5 == "AND"  or bool_1 == None:
+        query = query & publish_date_q
+    else:
+        query = query | publish_date_q
+    print(query)
+    result = solr.search(str(query).replace("\\",""), **{
         'rows':1,
         'hl':'true',
         'hl.method':'original',
@@ -142,17 +194,18 @@ def fulltextws():
         'hl.simple.post':'</mark>',
         'hl.highlightMultiTerm':'true',
         'hl.fragsize':100,
-        'defType' : 'dismax',
+        'defType' : 'edismax',
         'fl' : '*, score',
         # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm':1,
         'ps':3,
-        'pf': 'title^1.0 description^1.0 content^2.0',
-        'qf':'topic^1 title^3.0 description^1.0 content^1.0',
+        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     for i in result:
         print(i)
+    print(result.highlighting.values())
     return jsonify("ok")
 
 # Xóa data

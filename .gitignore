@@ -2,12 +2,8 @@ data_lod
 word2vec
 params.txt
 author.json
-<<<<<<< HEAD
 quote.json
 solr_test.py
 add_test.py
 .*
 query.py
-=======
-quote.json
->>>>>>> 21260865efbd7d02498613e0f7e37bbfec30b70f
