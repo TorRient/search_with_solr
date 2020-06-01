@@ -3,7 +3,7 @@ import json
 import os
 from flask import Flask, jsonify, request, render_template
 from werkzeug.utils import secure_filename
-
+from pyvi import ViTokenizer
 config = {
     'host': 'http://localhost',
     'port': '8983',
