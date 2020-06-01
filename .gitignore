@@ -7,3 +7,4 @@ solr_test.py
 add_test.py
 .*
 query.py
+quote.json

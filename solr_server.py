@@ -21,8 +21,8 @@ static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'stati
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads/')
 
-from word_similar import Word_Similar
-ws = Word_Similar()
+# from word_similar import Word_Similar
+# ws = Word_Similar()
 
 # Add data
 @app.route('/add_data', methods=['GET'])
