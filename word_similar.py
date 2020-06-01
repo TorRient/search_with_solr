@@ -35,7 +35,7 @@ class Word_Similar():
             except:
                 pass
         text = ''
-        print(word_similar)
+        # print(word_similar)
         for words in word_similar:
             for word in words:
                 if word[1] > 0.7:

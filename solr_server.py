@@ -28,20 +28,21 @@ ws = Word_Similar()
 @app.route('/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
-    count = 0
     for file_name in list_json:
-        paths = os.path.join('./data',file_name)
+        paths = os.path.join(path, file_name)
         with open(paths) as json_file:
             data = json.load(json_file)
             data = list(data)
             for field in data:
                 field["content"] = ViTokenizer.tokenize(field["content"])
-                field["author"] = ViTokenizer.tokenize(field["author"])
                 field["title"] = ViTokenizer.tokenize(field["title"])
                 field["description"] = ViTokenizer.tokenize(field["description"])
                 field["topic"] = ViTokenizer.tokenize(field["topic"])
+
+                field["author"] = field["author"].replace(' ', '_')
+
             solr.add(data)
-        # break
+        
     return jsonify("OK")
 
 # Thêm data bằng file
@@ -75,8 +76,9 @@ def fulltext():
     rows         = request.args.get('rows')
     full_text    = request.args.get('full_text')
     word_similar = request.args.get('word_similar')
-    if word_similar == True: # Nếu có feature từ đồng nghĩa
-        full_text = ws.find_word_similar(full_text)
+    # Nếu có feature từ đồng nghĩa
+    if word_similar == True: 
+        general_text = ws.find_word_similar(general_text)
 
     result = solr.search(full_text, **{
         'rows':rows,
@@ -86,14 +88,14 @@ def fulltext():
         'hl.simple.post':'</mark>',
         'hl.highlightMultiTerm':'true',
         'hl.fragsize':100,
-        'defType' : 'dismax',
+        'defType' : 'edismax',
         'fl' : '*, score',
         # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm':1,
         'ps':3,
-        'pf': 'title^1.0 description^1.0 content^2.0',
-        'qf':'topic^1 title^3.0 description^1.0 content^1.0',
+        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
@@ -129,13 +131,7 @@ def fulltextws():
     
     publish_date        = request.args.get('publish_date')
     # weight_publish_date = request.args.get('weight_publish_date')
-    # print(topic)
-    # print(title)
-    # print(description)
-    # print(content)
-    # print(author)
-    # print(publish_date)
-    # if word_similar == True:
+   
     title             = ws.find_word_similar(title) if title != "" else ""
     description       = ws.find_word_similar(description) if description != "" else ""
     content           = ws.find_word_similar(content) if content != "" else ""
@@ -205,7 +201,7 @@ def fulltextws():
         'hl.fragsize':100,
         'defType' : 'edismax',
         'fl' : '*, score',
-        # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
+        'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm':1,
         'ps':3,
@@ -222,6 +218,12 @@ def fulltextws():
 def delete_data():
     solr.delete(q='*:*')
     return jsonify("OK")
+
+@app.route('/result_search/clicked/<id>', methods=['POST'])
+def clicked(id):
+    doc = { 'id' : id, 'clicked' : 1}
+    solr.add([doc], fieldUpdates={'clicked':'inc'})
+    return 'OK'
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
