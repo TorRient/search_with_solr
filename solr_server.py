@@ -48,8 +48,6 @@ def add_data(path='./data'):
 # Thêm data bằng file
 @app.route('/add_data_file', methods=['GET','POST'])
 def add_data_file():
-    # if request.method == 'GET':
-    #     return render_template('add_file.html')
     file = request.files['file']
     if file:
         filename = secure_filename(file.filename)
@@ -78,7 +76,7 @@ def fulltext():
     word_similar = request.args.get('word_similar')
     # Nếu có feature từ đồng nghĩa
     if word_similar == True: 
-        general_text = ws.find_word_similar(general_text)
+        full_text = ws.find_word_similar(full_text)
 
     result = solr.search(full_text, **{
         'rows':rows,
@@ -100,15 +98,14 @@ def fulltext():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    return jsonify(results=json.dumps(list(result)), hightlight=json.dumps(highlight))
+    return jsonify(results=json.dumps(list(result)), highlight=json.dumps(highlight))
 
 @app.route('/field', methods=['POST'])
 def fulltextws():
     rows                = int(request.args.get('rows'))
-    print(type(rows))
+
     word_similar        = request.args.get('word_similar')
 
-    # general_text        = request.args.get('general_text')
     topic               = request.args.get('topic')
     bool_1              = request.args.get('bool_1')
     # weight_topic        = request.args.get('weight_topic')
@@ -131,10 +128,11 @@ def fulltextws():
     
     publish_date        = request.args.get('publish_date')
     # weight_publish_date = request.args.get('weight_publish_date')
-   
-    title             = ws.find_word_similar(title) if title != "" else ""
-    description       = ws.find_word_similar(description) if description != "" else ""
-    content           = ws.find_word_similar(content) if content != "" else ""
+    
+    if word_similar == True:
+        title             = ws.find_word_similar(title) if title != "" else ""
+        description       = ws.find_word_similar(description) if description != "" else ""
+        content           = ws.find_word_similar(content) if content != "" else ""
 
     if topic == '':
         topic_q             = Q(topic="*")
@@ -211,7 +209,7 @@ def fulltextws():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    return jsonify(results=json.dumps(list(result)), hightlight=json.dumps(highlight))
+    return jsonify(results=json.dumps(list(result)), highlight=json.dumps(highlight))
 
 # Xóa data
 @app.route('/delete_data', methods=['GET'])
