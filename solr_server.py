@@ -3,7 +3,7 @@ import json
 import os
 from flask import Flask, jsonify, request, render_template
 from werkzeug.utils import secure_filename
-
+from pyvi import ViTokenizer
 config = {
     'host': 'http://localhost',
     'port': '8983',
@@ -31,6 +31,12 @@ def add_data(path='./data'):
         with open(paths) as json_file:
             data = json.load(json_file)
             data = list(data)
+            for field in data:
+                field["content"] = ViTokenizer.tokenize(field["content"])
+                field["author"] = ViTokenizer.tokenize(field["author"])
+                field["title"] = ViTokenizer.tokenize(field["title"])
+                field["description"] = ViTokenizer.tokenize(field["description"])
+                field["topic"] = ViTokenizer.tokenize(field["topic"])
             solr.add(data)
         # break
     return jsonify("OK")
@@ -50,6 +56,13 @@ def add_data_file():
 
     with open(file_path) as json_file:
             data = json.load(json_file)
+            data = list(data)
+            for field in data:
+                field["content"] = ViTokenizer.tokenize(field["content"])
+                field["author"] = ViTokenizer.tokenize(field["author"])
+                field["title"] = ViTokenizer.tokenize(field["title"])
+                field["description"] = ViTokenizer.tokenize(field["description"])
+                field["topic"] = ViTokenizer.tokenize(field["topic"])
             solr.add(data)
 
     return jsonify("OK")
