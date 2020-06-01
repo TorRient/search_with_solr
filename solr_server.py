@@ -72,13 +72,14 @@ def add_data_file():
 
 @app.route('/fulltext', methods=['POST'])
 def fulltext():
+    rows         = request.args.get('rows')
     general_text = request.args.get('general_text')
     word_similar = request.args.get('word_similar')
     if word_similar == True: # Nếu có feature từ đồng nghĩa
         general_text = ws.find_word_similar(general_text)
 
     results = solr.search(general_text, **{
-        'rows':10,
+        'rows':rows,
         'hl':'true',
         'hl.method':'original',
         'hl.simple.pre':'<mark style="background-color:#ffff0070;">',
@@ -98,6 +99,8 @@ def fulltext():
 
 @app.route('/field', methods=['POST'])
 def fulltextws():
+    rows                = request.args.get('rows')
+
     # general_text        = request.args.get('general_text')
     topic               = request.args.get('topic')
     bool_1              = request.args.get('bool_1')
@@ -187,7 +190,7 @@ def fulltextws():
         query = query | publish_date_q
     print(query)
     result = solr.search(str(query).replace("\\",""), **{
-        'rows':1,
+        'rows': rows,
         'hl':'true',
         'hl.method':'original',
         'hl.simple.pre':'<mark style="background-color:#ffff0070;">',
