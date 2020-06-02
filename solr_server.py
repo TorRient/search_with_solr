@@ -69,147 +69,152 @@ def add_data_file():
 
     return jsonify("OK")
 
-@app.route('/fulltext', methods=['POST'])
+@app.route('/api/fulltext', methods=['POST'])
 def fulltext():
-    rows         = request.args.get('rows')
-    full_text    = request.args.get('full_text')
-    word_similar = request.args.get('word_similar')
+    rows = request.json.get('rows')
+    full_text = request.json.get('full_text')
+    word_similar = request.json.get('word_similar')
+    print(rows, full_text, word_similar)
     # Nếu có feature từ đồng nghĩa
-    if word_similar == True: 
+
+    if word_similar == True:
         full_text = ws.find_word_similar(full_text)
 
     result = solr.search(full_text, **{
-        'rows':rows,
-        'hl':'true',
-        'hl.method':'original',
-        'hl.simple.pre':'<mark style="background-color:#ffff0070;">',
-        'hl.simple.post':'</mark>',
-        'hl.highlightMultiTerm':'true',
-        'hl.fragsize':100,
-        'defType' : 'edismax',
-        'fl' : '*, score',
+        'rows': rows,
+        'hl': 'true',
+        'hl.method': 'original',
+        'hl.simple.pre': '<mark style="background-color:#ffff0070;">',
+        'hl.simple.post': '</mark>',
+        'hl.highlightMultiTerm': 'true',
+        'hl.fragsize': 100,
+        'defType': 'edismax',
+        'fl': '*, score',
         # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
-        'mm':1,
-        'ps':3,
+        'mm': 1,
+        'ps': 3,
         'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
         'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    return jsonify(results=json.dumps(list(result)), highlight=json.dumps(highlight))
+    return jsonify(results=list(result), hightlight=highlight)
 
-@app.route('/field', methods=['POST'])
+
+@app.route('/api/field', methods=['POST'])
 def fulltextws():
-    rows                = int(request.args.get('rows'))
+    rows = int(request.json.get('rows'))
 
-    word_similar        = request.args.get('word_similar')
+    word_similar = request.json.get('word_similar')
 
-    topic               = request.args.get('topic')
-    bool_1              = request.args.get('bool_1')
-    # weight_topic        = request.args.get('weight_topic')
+    topic = request.json.get('topic')
+    bool_1 = request.json.get('bool_1')
+    # weight_topic        = request.json.get('weight_topic')
 
-    title               = request.args.get('title')
-    bool_2              = request.args.get('bool_2')
-    # weight_title        = request.args.get('weight_title')
-    
-    description         = request.args.get('description')
-    bool_3              = request.args.get('bool_3')
-    # weight_description  = request.args.get('weight_description')
-    
-    content             = request.args.get('content')
-    bool_4              = request.args.get('bool_4')
-    # weight_content      = request.args.get('weight_content')
-    
-    author              = request.args.get('author')
-    bool_5              = request.args.get('bool_5')
-    # weight_author       = request.args.get('weight_author')
-    
-    publish_date        = request.args.get('publish_date')
-    # weight_publish_date = request.args.get('weight_publish_date')
-    
+    title = request.json.get('title')
+    bool_2 = request.json.get('bool_2')
+    # weight_title        = request.json.get('weight_title')
+
+    description = request.json.get('description')
+    bool_3 = request.json.get('bool_3')
+    # weight_description  = request.json.get('weight_description')
+
+    content = request.json.get('content')
+    bool_4 = request.json.get('bool_4')
+    # weight_content      = request.json.get('weight_content')
+
+    author = request.json.get('author')
+    bool_5 = request.json.get('bool_5')
+    # weight_author       = request.json.get('weight_author')
+
+    publish_date = request.json.get('publish_date')
+    # weight_publish_date = request.json.get('weight_publish_date')
+
     if word_similar == True:
-        title             = ws.find_word_similar(title) if title != "" else ""
-        description       = ws.find_word_similar(description) if description != "" else ""
-        content           = ws.find_word_similar(content) if content != "" else ""
+        title = ws.find_word_similar(title) if title != "" else ""
+        description = ws.find_word_similar(
+            description) if description != "" else ""
+        content = ws.find_word_similar(content) if content != "" else ""
 
     if topic == '':
-        topic_q             = Q(topic="*")
+        topic_q = Q(topic="*")
     else:
-        topic_q             = Q(topic=topic)
+        topic_q = Q(topic=topic)
 
     if title == '':
-        title_q             = Q(title="*")
+        title_q = Q(title="*")
     else:
-        title_q             = Q(title=title)
+        title_q = Q(title=title)
 
     if description == '':
-        description_q       = Q(description="*")
+        description_q = Q(description="*")
     else:
-        description_q       = Q(description=description)
+        description_q = Q(description=description)
 
     if content == '':
-        content_q           = Q(content="*")
+        content_q = Q(content="*")
     else:
-        content_q           = Q(content=content)
+        content_q = Q(content=content)
 
     if author == '':
-        author_q            = Q(author="*")
+        author_q = Q(author="*")
     else:
-        author_q            = Q(author=author)
+        author_q = Q(author=author)
 
     if publish_date == '':
-        publish_date_q      = Q(publish_date="*")
+        publish_date_q = Q(publish_date="*")
     else:
-        publish_date_q      = Q(publish_date=publish_date)
-    
+        publish_date_q = Q(publish_date=publish_date)
+
     if bool_1 == "AND" or bool_1 == None:
         query = topic_q & title_q
     else:
         query = topic_q | title_q
-    
-    if bool_2 == "AND"  or bool_1 == None:
+
+    if bool_2 == "AND" or bool_1 == None:
         query = query & description_q
     else:
         query = query | description_q
 
-    if bool_3 == "AND"  or bool_1 == None:
+    if bool_3 == "AND" or bool_1 == None:
         query = query & content_q
     else:
         query = query | content_q
 
-    if bool_4 == "AND"  or bool_1 == None:
+    if bool_4 == "AND" or bool_1 == None:
         query = query & author_q
     else:
         query = query | author_q
 
-    if bool_5 == "AND"  or bool_1 == None:
+    if bool_5 == "AND" or bool_1 == None:
         query = query & publish_date_q
     else:
         query = query | publish_date_q
     # print(query)
-    result = solr.search(str(query).replace("\\",""), **{
+    result = solr.search(str(query).replace("\\", ""), **{
         'rows': rows,
-        'hl':'true',
-        'hl.method':'original',
-        'hl.simple.pre':'<mark style="background-color:#ffff0070;">',
-        'hl.simple.post':'</mark>',
-        'hl.highlightMultiTerm':'true',
-        'hl.fragsize':100,
-        'defType' : 'edismax',
-        'fl' : '*, score',
-        'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
+        'hl': 'true',
+        'hl.method': 'original',
+        'hl.simple.pre': '<mark style="background-color:#ffff0070;">',
+        'hl.simple.post': '</mark>',
+        'hl.highlightMultiTerm': 'true',
+        'hl.fragsize': 100,
+        'defType': 'edismax',
+        'fl': '*, score',
+        'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
-        'mm':1,
-        'ps':3,
+        'mm': 1,
+        'ps': 3,
         'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
         'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    return jsonify(results=json.dumps(list(result)), highlight=json.dumps(highlight))
+
+    return jsonify(results=list(result), hightlight=highlight)
 
 # Xóa data
 @app.route('/delete_data', methods=['GET'])
