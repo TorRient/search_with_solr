@@ -1,3 +1,4 @@
+from word_similar import Word_Similar
 import pysolr
 import json
 import os
@@ -15,16 +16,20 @@ config = {
 }
 
 # Setup a Solr instance. The timeout is optional.
-solr = pysolr.Solr(config['host']+':'+config['port']+'/solr/'+config['core_name'], always_commit=True, timeout=config['timeout'])
+solr = pysolr.Solr(config['host']+':'+config['port']+'/solr/' +
+                   config['core_name'], always_commit=True, timeout=config['timeout'])
 
-static_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static/')
+static_folder = os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), 'static/')
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'uploads/')
+app.config['UPLOAD_FOLDER'] = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'uploads/')
 
-from word_similar import Word_Similar
 ws = Word_Similar()
 
 # Add data
+
+
 @app.route('/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
@@ -36,38 +41,41 @@ def add_data(path='./data'):
             for field in data:
                 field["content"] = ViTokenizer.tokenize(field["content"])
                 field["title"] = ViTokenizer.tokenize(field["title"])
-                field["description"] = ViTokenizer.tokenize(field["description"])
+                field["description"] = ViTokenizer.tokenize(
+                    field["description"])
                 field["topic"] = ViTokenizer.tokenize(field["topic"])
 
                 field["author"] = field["author"].replace(' ', '_')
-
             solr.add(data)
-        
+        break
     return jsonify("OK")
 
 # Thêm data bằng file
-@app.route('/add_data_file', methods=['GET','POST'])
+
+
+@app.route('/add_data_file', methods=['GET', 'POST'])
 def add_data_file():
     file = request.files['file']
     if file:
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-    else :
+    else:
         return jsonify('NOT FILE')
 
     with open(file_path) as json_file:
-            data = json.load(json_file)
-            data = list(data)
-            for field in data:
-                field["content"] = ViTokenizer.tokenize(field["content"])
-                field["author"] = ViTokenizer.tokenize(field["author"])
-                field["title"] = ViTokenizer.tokenize(field["title"])
-                field["description"] = ViTokenizer.tokenize(field["description"])
-                field["topic"] = ViTokenizer.tokenize(field["topic"])
-            solr.add(data)
+        data = json.load(json_file)
+        data = list(data)
+        for field in data:
+            field["content"] = ViTokenizer.tokenize(field["content"])
+            field["author"] = ViTokenizer.tokenize(field["author"])
+            field["title"] = ViTokenizer.tokenize(field["title"])
+            field["description"] = ViTokenizer.tokenize(field["description"])
+            field["topic"] = ViTokenizer.tokenize(field["topic"])
+        solr.add(data)
 
     return jsonify("OK")
+
 
 @app.route('/api/fulltext', methods=['POST'])
 def fulltext():
@@ -216,17 +224,23 @@ def fulltextws():
 
     return jsonify(results=list(result), hightlight=highlight)
 
+
 # Xóa data
-@app.route('/delete_data', methods=['GET'])
+
+
+@app.route('/api/delete_data', methods=['GET'])
 def delete_data():
     solr.delete(q='*:*')
     return jsonify("OK")
 
-@app.route('/result_search/clicked/<id>', methods=['POST'])
-def clicked(id):
-    doc = { 'id' : id, 'clicked' : 1}
-    solr.add([doc], fieldUpdates={'clicked':'inc'})
+
+@app.route('/api/result_search/clicked', methods=['POST'])
+def clicked_id():
+    id = request.json.get('id')
+    doc = {'id': id, 'clicked': 1}
+    solr.add([doc], fieldUpdates={'clicked': 'inc'})
     return 'OK'
 
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='127.0.0.1', port=5000)
