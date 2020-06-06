@@ -68,7 +68,7 @@ def add_data_file():
         data = list(data)
         for field in data:
             field["content"] = ViTokenizer.tokenize(field["content"])
-            field["author"] = ViTokenizer.tokenize(field["author"])
+            field["author"] = field["author"].replace(' ', '_')
             field["title"] = ViTokenizer.tokenize(field["title"])
             field["description"] = ViTokenizer.tokenize(field["description"])
             field["topic"] = ViTokenizer.tokenize(field["topic"])
@@ -82,13 +82,47 @@ def fulltext():
     rows = request.json.get('rows')
     full_text = request.json.get('full_text')
     word_similar = request.json.get('word_similar')
-    print(rows, full_text, word_similar)
-    # Nếu có feature từ đồng nghĩa
+    # print(rows, full_text, word_similar)
+    # # Nếu có feature từ đồng nghĩa
 
-    if word_similar == True:
-        full_text = ws.find_word_similar(full_text)
+    # if word_similar == True:
+    #     full_text = ws.find_word_similar(full_text)
 
-    result = solr.search(full_text, **{
+    full_text = full_text.replace('&&', 'AND')
+    full_text = full_text.replace('&', 'AND')
+    full_text =full_text.replace('and', 'AND')
+    full_text =full_text.replace('or', 'OR')
+    full_text = full_text.replace('||', 'OR')
+    full_text =full_text.replace('|', 'OR')
+
+    full_text_token = ''
+    c_p = 0
+    full_text_split = full_text.split()
+    # print(full_text_split)
+    for i,v in enumerate(full_text_split):
+        if v == 'AND' or v == 'OR':
+            tmp = ' '
+            for text in full_text.split()[c_p:i]:
+                tmp = tmp + text + ' '
+            c_p = i + 1
+            tmp = tmp.replace(' OR ', ' ')
+            tmp = tmp.replace(' AND ', ' ')
+            tmp = ViTokenizer.tokenize(tmp)
+            full_text_token = full_text_token + tmp + ' '+  v + ' '
+
+        if i+1 == len(full_text_split):
+            tmp = ' '
+            for text in full_text.split()[c_p:i+1]:
+                tmp += text + ' '
+            tmp = ViTokenizer.tokenize(tmp)
+            full_text_token = full_text_token + tmp
+    
+    for i in range(len(full_text_token)):
+        full_text_token = full_text_token.replace('  ', ' ')
+    full_text_token = full_text_token.strip()
+    print(full_text_token)
+
+    result = solr.search(full_text_token, **{
         'rows': rows,
         'hl': 'true',
         'hl.method': 'original',
@@ -98,7 +132,7 @@ def fulltext():
         'hl.fragsize': 100,
         'defType': 'edismax',
         'fl': '*, score',
-        # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
+        'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
@@ -108,43 +142,48 @@ def fulltext():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
+    # for i in highlight:
+    #     print(i)    
     return jsonify(results=list(result), hightlight=highlight)
 
 
 @app.route('/api/field', methods=['POST'])
-def fulltextws():
+def field():
     rows = int(request.json.get('rows'))
 
     word_similar = request.json.get('word_similar')
 
     topic = request.json.get('topic')
-    bool_1 = request.json.get('bool_1')
-    # weight_topic        = request.json.get('weight_topic')
+    weight_topic        = request.json.get('weight_topic')
 
     title = request.json.get('title')
-    bool_2 = request.json.get('bool_2')
-    # weight_title        = request.json.get('weight_title')
+    weight_title        = request.json.get('weight_title')
 
     description = request.json.get('description')
-    bool_3 = request.json.get('bool_3')
-    # weight_description  = request.json.get('weight_description')
+    weight_description  = request.json.get('weight_description')
 
     content = request.json.get('content')
-    bool_4 = request.json.get('bool_4')
-    # weight_content      = request.json.get('weight_content')
+    weight_content      = request.json.get('weight_content')
 
     author = request.json.get('author')
-    bool_5 = request.json.get('bool_5')
-    # weight_author       = request.json.get('weight_author')
+    weight_author       = request.json.get('weight_author')
 
     publish_date = request.json.get('publish_date')
-    # weight_publish_date = request.json.get('weight_publish_date')
+    weight_publish_date = request.json.get('weight_publish_date')
+
+
+    topic = ViTokenizer.tokenize(topic.strip()) if topic else ''
+    author = author.strip().replace(' ', '_') if author else ''
+    publish_date = publish_date.strip() if publish_date else ''
 
     if word_similar == True:
-        title = ws.find_word_similar(title) if title != "" else ""
-        description = ws.find_word_similar(
-            description) if description != "" else ""
-        content = ws.find_word_similar(content) if content != "" else ""
+        title = ws.find_word_similar(title.strip()) if title  else ""
+        description = ws.find_word_similar(description.strip()) if description  else ""
+        content = ws.find_word_similar(content.strip()) if content  else ""
+    else:
+        title = ViTokenizer.tokenize(title.strip()) if title  else ''
+        description = ViTokenizer.tokenize(description.strip()) if description  else ''
+        content = ViTokenizer.tokenize(content.strip()) if content else ''
 
     if topic == '':
         topic_q = Q(topic="*")
@@ -176,31 +215,10 @@ def fulltextws():
     else:
         publish_date_q = Q(publish_date=publish_date)
 
-    if bool_1 == "AND" or bool_1 == None:
-        query = topic_q & title_q
-    else:
-        query = topic_q | title_q
 
-    if bool_2 == "AND" or bool_1 == None:
-        query = query & description_q
-    else:
-        query = query | description_q
+    query = topic_q & title_q & author_q & description_q & content_q & publish_date_q
 
-    if bool_3 == "AND" or bool_1 == None:
-        query = query & content_q
-    else:
-        query = query | content_q
-
-    if bool_4 == "AND" or bool_1 == None:
-        query = query & author_q
-    else:
-        query = query | author_q
-
-    if bool_5 == "AND" or bool_1 == None:
-        query = query & publish_date_q
-    else:
-        query = query | publish_date_q
-    # print(query)
+    print(query)
     result = solr.search(str(query).replace("\\", ""), **{
         'rows': rows,
         'hl': 'true',
@@ -221,7 +239,7 @@ def fulltextws():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-
+  
     return jsonify(results=list(result), hightlight=highlight)
 
 
@@ -240,6 +258,7 @@ def clicked_id():
     doc = {'id': id, 'clicked': 1}
     solr.add([doc], fieldUpdates={'clicked': 'inc'})
     return 'OK'
+
 
 
 if __name__ == "__main__":
