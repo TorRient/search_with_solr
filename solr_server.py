@@ -28,8 +28,6 @@ app.config['UPLOAD_FOLDER'] = os.path.join(
 ws = Word_Similar()
 
 # Add data
-
-
 @app.route('/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
@@ -41,18 +39,14 @@ def add_data(path='./data'):
             for field in data:
                 field["content"] = ViTokenizer.tokenize(field["content"])
                 field["title"] = ViTokenizer.tokenize(field["title"])
-                field["description"] = ViTokenizer.tokenize(
-                    field["description"])
+                field["description"] = ViTokenizer.tokenize(field["description"])
                 field["topic"] = ViTokenizer.tokenize(field["topic"])
+                field["author"] = field["author"].strip().replace(' ', '_')
 
-                field["author"] = field["author"].replace(' ', '_')
             solr.add(data)
-        break
     return jsonify("OK")
 
 # Thêm data bằng file
-
-
 @app.route('/add_data_file', methods=['GET', 'POST'])
 def add_data_file():
     file = request.files['file']
@@ -68,7 +62,7 @@ def add_data_file():
         data = list(data)
         for field in data:
             field["content"] = ViTokenizer.tokenize(field["content"])
-            field["author"] = field["author"].replace(' ', '_')
+            field["author"] = field["author"].strip().replace(' ', '_')
             field["title"] = ViTokenizer.tokenize(field["title"])
             field["description"] = ViTokenizer.tokenize(field["description"])
             field["topic"] = ViTokenizer.tokenize(field["topic"])
@@ -82,12 +76,6 @@ def fulltext():
     rows = request.json.get('rows')
     full_text = request.json.get('full_text')
     word_similar = request.json.get('word_similar')
-    # print(rows, full_text, word_similar)
-    # # Nếu có feature từ đồng nghĩa
-
-    # if word_similar == True:
-    #     full_text = ws.find_word_similar(full_text)
-
     full_text = full_text.replace('&&', 'AND')
     full_text = full_text.replace('&', 'AND')
     full_text =full_text.replace('and', 'AND')
@@ -133,17 +121,16 @@ def fulltext():
         'defType': 'edismax',
         'fl': '*, score',
         'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
-        # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
-        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
-        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'pf': 'topic^1 title^4 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^4 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    # for i in highlight:
-    #     print(i)    
+    for i in result:
+        print(i['score'])    
     return jsonify(results=list(result), hightlight=highlight)
 
 
@@ -233,12 +220,17 @@ def field():
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
-        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
-        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'pf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}' \
+                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
+        'qf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}'\
+                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
     })
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
+    
+    # for i in highlight:
+    #     print(i)
   
     return jsonify(results=list(result), hightlight=highlight)
 
