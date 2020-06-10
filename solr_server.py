@@ -37,12 +37,13 @@ def add_data(path='./data'):
             data = json.load(json_file)
             data = list(data)
             for field in data:
-                field["content"] = ViTokenizer.tokenize(field["content"])
-                field["title"] = ViTokenizer.tokenize(field["title"])
-                field["description"] = ViTokenizer.tokenize(field["description"])
-                field["topic"] = ViTokenizer.tokenize(field["topic"])
-                field["author"] = field["author"].strip().replace(' ', '_')
-
+                field["content"] = ViTokenizer.tokenize(field["content"]) if field['content'] else 'nothing'
+                field["title"] = ViTokenizer.tokenize(field["title"]) if field['title'] else 'nothing'
+                field["description"] = ViTokenizer.tokenize(field["description"]) if field['description'] else 'nothing'
+                field["topic"] = ViTokenizer.tokenize(field["topic"]) if field['topic'] else 'nothing'
+                field["author"] = field["author"].strip().replace(' ', '_') if field['author'].strip() else 'unknow'
+                field['publish_date'] = field['publish_date'] if field['publish_date'] else 'unknow'
+            
             solr.add(data)
     return jsonify("OK")
 
@@ -120,7 +121,7 @@ def fulltext():
         'hl.fragsize': 100,
         'defType': 'edismax',
         'fl': '*, score',
-        'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
+        # 'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
         'mm': 1,
         'ps': 3,
         'pf': 'topic^1 title^4 content^1 author^1 description^1 publish_date^1',
@@ -129,8 +130,11 @@ def fulltext():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    for i in result:
-        print(i['score'])    
+    # for i in result:
+    # #     print(i['score'])
+    # for i in result:
+    #     print(i)
+    #     print('--------')
     return jsonify(results=list(result), hightlight=highlight)
 
 
