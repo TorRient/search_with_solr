@@ -12,7 +12,7 @@ config = {
     'host': 'http://localhost',
     'port': '8983',
     'core_name': 'bkcv',
-    'timeout': 100
+    'timeout': 10
 }
 
 # Setup a Solr instance. The timeout is optional.
@@ -76,7 +76,6 @@ def add_data_file():
 def fulltext():
     rows = request.json.get('rows')
     full_text = request.json.get('full_text')
-    word_similar = request.json.get('word_similar')
     full_text = full_text.replace('&&', 'AND')
     full_text = full_text.replace('&', 'AND')
     full_text =full_text.replace('and', 'AND')
@@ -121,11 +120,11 @@ def fulltext():
         'hl.fragsize': 100,
         'defType': 'edismax',
         'fl': '*, score',
-        # 'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
+        # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         'mm': 1,
         'ps': 3,
-        'pf': 'topic^1 title^4 content^1 author^1 description^1 publish_date^1',
-        'qf': 'topic^1 title^4 content^1 author^1 description^1 publish_date^1',
+        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
@@ -209,8 +208,9 @@ def field():
 
     query = topic_q & title_q & author_q & description_q & content_q & publish_date_q
 
-    print(query)
-    result = solr.search(str(query).replace("\\", ""), **{
+    query_q = str(query).replace('\\', '').replace('(', '').replace(')', '')
+    print(query_q)
+    result = solr.search(query_q, **{
         'rows': rows,
         'hl': 'true',
         'hl.method': 'original',
@@ -220,7 +220,7 @@ def field():
         'hl.fragsize': 100,
         'defType': 'edismax',
         'fl': '*, score',
-        'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
+        # 'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
