@@ -28,7 +28,7 @@ app.config['UPLOAD_FOLDER'] = os.path.join(
 ws = Word_Similar()
 
 # Add data
-@app.route('/add_data', methods=['GET'])
+@app.route('/api/add_data', methods=['GET'])
 def add_data(path='./data'):
     list_json = os.listdir(path)
     for file_name in list_json:
@@ -41,7 +41,7 @@ def add_data(path='./data'):
                 field["title"] = ViTokenizer.tokenize(field["title"]) if field['title'] else 'nothing'
                 field["description"] = ViTokenizer.tokenize(field["description"]) if field['description'] else 'nothing'
                 field["topic"] = ViTokenizer.tokenize(field["topic"]) if field['topic'] else 'nothing'
-                field["author"] = field["author"].strip().replace(' ', '_') if field['author'].strip() else 'unknow'
+                field["author"] = field["author"].strip().replace(' ', '_') if (field['author'] and field['author'].strip()) else 'unknow'
                 field['publish_date'] = field['publish_date'] if field['publish_date'] else 'unknow'
             
             solr.add(data)
@@ -76,6 +76,32 @@ def add_data_file():
 def fulltext():
     rows = request.json.get('rows')
     full_text = request.json.get('full_text')
+
+    weight_topic        = request.json.get('weight_topic')
+    weight_title        = request.json.get('weight_title')
+    weight_description  = request.json.get('weight_description')
+    weight_content      = request.json.get('weight_content')
+    weight_author      = request.json.get('weight_author')
+    weight_publish_date = request.json.get('weight_publish_date')
+
+    # print(weight_author)
+    #define weight if it is unavaiable
+    weight_topic        = weight_topic if weight_topic else 1
+    weight_title        = weight_title if weight_title else 1
+    weight_description  = weight_description if weight_description else 1
+    weight_content      = weight_content if weight_content else 1
+    weight_author      = weight_author if weight_author else 1
+    weight_publish_date = weight_publish_date if weight_publish_date else 1
+
+    print(weight_title)
+    print(weight_topic)
+    print(weight_description)
+    print(weight_content)
+    print(weight_publish_date)
+    print(weight_author)
+
+    full_text = full_text if full_text else ''
+
     full_text = full_text.replace('&&', 'AND')
     full_text = full_text.replace('&', 'AND')
     full_text =full_text.replace('and', 'AND')
@@ -123,8 +149,10 @@ def fulltext():
         # 'bq':'{!func}linear(clicked, 0.01 ,0.0 )',
         'mm': 1,
         'ps': 3,
-        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
-        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'pf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}' \
+                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
+        'qf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}'\
+                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
     })
     highlight = []
     for i in result.highlighting.values():
@@ -144,26 +172,15 @@ def field():
     word_similar = request.json.get('word_similar')
 
     topic = request.json.get('topic')
-    weight_topic        = request.json.get('weight_topic')
-
     title = request.json.get('title')
-    weight_title        = request.json.get('weight_title')
-
     description = request.json.get('description')
-    weight_description  = request.json.get('weight_description')
-
     content = request.json.get('content')
-    weight_content      = request.json.get('weight_content')
-
     author = request.json.get('author')
-    weight_author       = request.json.get('weight_author')
-
     publish_date = request.json.get('publish_date')
-    weight_publish_date = request.json.get('weight_publish_date')
 
-
+    # tokenizer and word similar
     topic = ViTokenizer.tokenize(topic.strip()) if topic else ''
-    author = author.strip().replace(' ', '_') if author else ''
+    author = author.strip().replace(' ', '_') if (author and author.strip()) else ''
     publish_date = publish_date.strip() if publish_date else ''
 
     if word_similar == True:
@@ -175,6 +192,7 @@ def field():
         description = ViTokenizer.tokenize(description.strip()) if description  else ''
         content = ViTokenizer.tokenize(content.strip()) if content else ''
 
+    # convert to solrQ
     if topic == '':
         topic_q = Q(topic="*")
     else:
@@ -224,10 +242,8 @@ def field():
         # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
-        'pf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}' \
-                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
-        'qf': 'topic^{} title^{} content^{} author^{} description^{} publish_date^{}'\
-                .format(weight_topic, weight_title, weight_content, weight_author, weight_description, weight_publish_date),
+        'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
+        'qf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',
     })
     highlight = []
     for i in result.highlighting.values():
@@ -253,7 +269,7 @@ def clicked_id():
     id = request.json.get('id')
     doc = {'id': id, 'clicked': 1}
     solr.add([doc], fieldUpdates={'clicked': 'inc'})
-    return 'OK'
+    return 'Ok'
 
 
 
