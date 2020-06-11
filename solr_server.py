@@ -41,8 +41,8 @@ def add_data(path='./data'):
                 field["title"] = ViTokenizer.tokenize(field["title"]) if field['title'] else 'nothing'
                 field["description"] = ViTokenizer.tokenize(field["description"]) if field['description'] else 'nothing'
                 field["topic"] = ViTokenizer.tokenize(field["topic"]) if field['topic'] else 'nothing'
-                field["author"] = field["author"].strip().replace(' ', '_') if (field['author'] and field['author'].strip()) else 'unknow'
-                field['publish_date'] = field['publish_date'] if field['publish_date'] else 'unknow'
+                field["author"] = field["author"].strip().replace(' ', '_') if (field['author'] and field['author'].strip()) else 'unknown'
+                field['publish_date'] = field['publish_date'] if field['publish_date'] else 'unknown'
             
             solr.add(data)
     return jsonify("OK")
@@ -75,6 +75,9 @@ def add_data_file():
 @app.route('/api/fulltext', methods=['POST'])
 def fulltext():
     rows = request.json.get('rows')
+    if rows == 'unlimited':
+        rows = 34000
+
     full_text = request.json.get('full_text')
 
     weight_topic        = request.json.get('weight_topic')
@@ -92,14 +95,7 @@ def fulltext():
     weight_content      = weight_content if weight_content else 1
     weight_author      = weight_author if weight_author else 1
     weight_publish_date = weight_publish_date if weight_publish_date else 1
-
-    print(weight_title)
-    print(weight_topic)
-    print(weight_description)
-    print(weight_content)
-    print(weight_publish_date)
-    print(weight_author)
-
+    
     full_text = full_text if full_text else ''
 
     full_text = full_text.replace('&&', 'AND')
@@ -157,11 +153,7 @@ def fulltext():
     highlight = []
     for i in result.highlighting.values():
         highlight.append(i)
-    # for i in result:
-    # #     print(i['score'])
-    # for i in result:
-    #     print(i)
-    #     print('--------')
+   
     return jsonify(results=list(result), hightlight=highlight)
 
 
@@ -239,7 +231,6 @@ def field():
         'defType': 'edismax',
         'fl': '*, score',
         # 'bq': '{!func}linear(clicked, 0.01 ,0.0 )',
-        # # 'bq':'{!func}log(linear(clicked, 20 ,0.0 ))',
         'mm': 1,
         'ps': 3,
         'pf': 'topic^1 title^1 content^1 author^1 description^1 publish_date^1',

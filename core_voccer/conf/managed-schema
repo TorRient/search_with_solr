@@ -141,8 +141,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 <fieldType name="author_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
@@ -157,8 +157,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 <fieldType name="title_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
@@ -173,8 +173,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 <fieldType name="publish_date_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
@@ -189,8 +189,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 <fieldType name="description_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
@@ -205,8 +205,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 <fieldType name="topic_general" class="solr.TextField" multiValued="false" omitNorms="true" indexed="true" stored="true" termVectors="true" termPositions="true">
@@ -221,8 +221,8 @@
     <filter class="solr.LowerCaseFilterFactory" />
   </analyzer>
   <similarity class="solr.BM25SimilarityFactory">
-    <float name="k1">1.0</float>
-    <float name="b">0.7</float>
+    <float name="k1">1.2</float>
+    <float name="b">0.75</float>
   </similarity>
 </fieldType>
 
