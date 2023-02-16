@@ -2,5 +2,5 @@ solrq==1.1.1
 Flask==1.1.1
 gensim==3.8.3
 pyvi==0.1
-Werkzeug==1.0.0
+Werkzeug==2.2.3
 pysolr==3.9.0
